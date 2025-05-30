@@ -59,3 +59,27 @@ int main() {
 
     return 0;
 }
+//without if conditions
+ #include <stdio.h>
+#include <unistd.h>
+
+int main(){
+        int fd[2];
+
+        pipe(fd);
+        if(fork()==0){
+                int arr[5];
+                int sum = 0;
+                read(fd[0],arr,sizeof(arr));
+                for(int i=0;i<5; sum +=arr[i++]);
+                write(fd[1],&sum,sizeof(sum));
+        }else{
+                int arr[5]={1,2,3,4,5};
+                int sum;
+                write(fd[1],arr,sizeof(arr));
+                sleep(1);
+                read(fd[0],&sum,sizeof(sum));
+                printf("Sum = %d\n",sum);
+        }
+
+}
