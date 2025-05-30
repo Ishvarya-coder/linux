@@ -1,0 +1,61 @@
+#include <stdio.h>
+#include <unistd.h>
+#include <sys/wait.h>
+#include <stdlib.h>
+
+void display(int res) {
+    printf("Parent process (PID: %d) Sum: %d\n", getpid(), res);
+}
+
+int sum(int arr[], int n) {
+    int res = 0;
+    for (int j = 0; j < n; j++) {
+        res += arr[j];
+    }
+    return res;
+}
+
+int main() {
+    int n;
+
+    printf("Enter number of elements: ");
+    scanf("%d", &n);
+
+    int arr[n];
+    printf("Enter %d elements:\n", n);
+    for (int i = 0; i < n; i++) {
+        scanf("%d", &arr[i]);
+    }
+
+    int pipefd[2];
+    if (pipe(pipefd) == -1) {
+        perror("Pipe failed");
+        return 1;
+    }
+
+    int f = fork();
+
+    if (f < 0) {
+        perror("Fork error");
+        return 1;
+    }
+
+    if (f == 0) {
+        // Child process
+        close(pipefd[0]); // Close reading end
+        int result = sum(arr, n);
+        write(pipefd[1], &result, sizeof(result));
+        close(pipefd[1]);
+        exit(0);
+    } else {
+        // Parent process
+        close(pipefd[1]); // Close writing end
+        int res;
+        wait(NULL);
+        read(pipefd[0], &res, sizeof(res));
+        close(pipefd[0]);
+        display(res);
+    }
+
+    return 0;
+}
